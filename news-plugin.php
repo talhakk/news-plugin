@@ -40,7 +40,21 @@ function newsplugin_activate() {
 }
 register_activation_hook( __FILE__, 'newsplugin_activate' );
 
-
+/*
+Make dashboard page for settings
+*/
+add_action( 'admin_menu', 'newsplugin_settings_page' );
+function newsplugin_settings_page() {
+    add_menu_page(
+        'Google News Api Settings',
+        'News Plugin',
+        'manage_options',
+        plugin_dir_path(__FILE__) . 'admin-pages.php',
+        null,
+        '',
+        20
+    );
+}
 
 /**
  * Deactivation hook.
