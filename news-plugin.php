@@ -10,7 +10,21 @@ Author URI: https://wordpressflash.com/
  * Register the "news" custom post type
  */
 function newsplugin_setup_post_type() {
-	register_post_type( 'news', ['public' => true ] ); 
+	register_post_type( 'news',
+        array(
+            'labels' => array(
+                'name' => __( 'News' ),
+                'singular_name' => __( 'News' )
+            ),
+            'public' => true,
+            'show_in_rest' => true,
+        'supports' => array('title', 'editor', 'thumbnail'),
+        'has_archive' => true,
+        'rewrite'   => array( 'slug' => 'google-news' ),
+            'menu_position' => 5,
+        'menu_icon' => 'dashicons-align-pull-left',
+        )
+    );
 } 
 add_action( 'init', 'newsplugin_setup_post_type' );
 
