@@ -11,7 +11,21 @@ curl_close($ch);
 $articles = $data['articles'];
 
 for ($i = 0; $i < count($articles); $i++) {
-    echo "Title: " . $articles[$i]['title'] . "\n";
+   /* echo "Title: " . $articles[$i]['title'] . "\n";
     echo "Description: " . $articles[$i]['description'] . "\n";
     echo "Description: " . $articles[$i]['content'] . "\n";
+*/
+    // Create post object
+$my_post = array(
+    'post_type' => 'news',
+    'post_title'    => wp_strip_all_tags( $articles[$i]['title'] ),
+    'post_content'  => $articles[$i]['content'],
+    'post_excerpt'  => $articles[$i]['description'],
+    'post_status'   => 'publish',
+    'post_author'   => 1
+    );
+    
+    // Insert the post into the database
+    wp_insert_post( $my_post );
 }
+
