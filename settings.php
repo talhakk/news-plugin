@@ -1,50 +1,64 @@
 <?php
-echo 'The News Plugin Settings Page';
-
-
-// add a new option to save API key
-add_option('newsplugin_save_api_key', 'e335cb473ab90265a531a14120ef424c');
-// get an option
-
 $apikey = get_option('newsplugin_save_api_key');
+// adding js in footer for simplicity and to avoid loading it on the whole site
+add_action( 'admin_footer', 'newsplugin_api_javascript' ); 
 
-
-//$apikey = 'e335cb473ab90265a531a14120ef424c';
-$url = "https://gnews.io/api/v4/search?q=google&lang=en&country=us&max=10&apikey=$apikey";
-
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-$data = json_decode(curl_exec($ch), true);
-curl_close($ch);
-$articles = $data['articles'];
-
-for ($i = 0; $i < count($articles); $i++) {
-   /* echo "Title: " . $articles[$i]['title'] . "\n";
-    echo "Description: " . $articles[$i]['description'] . "\n";
-    echo "Description: " . $articles[$i]['content'] . "\n";
+function newsplugin_api_javascript() { ?>
+	<script type="text/javascript" >
+	jQuery(document).ready(function($) {
+/*
+	Submitting API Key via Ajax
 */
-    // Create post object
-$new_post = array(
-    'post_type' => 'news',
-    'post_title'    => wp_strip_all_tags( $articles[$i]['title'] ),
-    'post_content'  => $articles[$i]['content'],
-    'post_excerpt'  => $articles[$i]['description'],
-    'post_status'   => 'publish',
-    'post_author'   => 1
-    );
+    $('#form-button-submit').on('click', function(e){
+       e.preventDefault();
+       var key =$("#apikey").val();
     
-    // Insert post into the database
-    // Use $wp_error set to true for error handling
-$post_check = wp_insert_post($new_post, true); 
 
-// Check if there was an error during post insertion
-if (is_wp_error($post_check)) {
-    // Error occurred while inserting the post
-    echo "Error: " . $post_check->get_error_message();
-} else {
-    // The post was successfully inserted, and $post_id contains the post ID
-    echo "Post inserted successfully. New Post ID: " . $post_check;
-}
-}
 
+		var data = {
+			'action': 'save_api_key',
+			'newsapikey': key
+		};
+    
+		// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
+		jQuery.post(ajaxurl, data, function(response) {
+			document.getElementById('newsplugin_submit_message').innerHTML='Your API Key: '+response+ '\n has been saved successfully';         
+		});
+       
+    });//preventdefault
+    /*
+	Submitting Search Form Data
+	*/
+	$('#form-search-button-submit').on('click', function(e){
+       e.preventDefault();
+       var searchinput =$("#news-search-input").val();
+    
+
+
+		var data = {
+			'action': 'search_news',
+			'searchterm': searchinput
+		};
+    
+		// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
+		jQuery.post(ajaxurl, data, function(response) {
+			document.getElementById('newsplugin_search_submit_message').innerHTML=response;
+		});
+       
+    });//preventdefault
+	});
+	</script> <?php
+}//newsplugin_api_javascript
+
+?> 
+<form action="#" method="post">
+<input id="apikey" type="text" name="apikey" value="<?php echo $apikey ?>">
+<input id="form-button-submit" type="submit">
+</form>
+<p id="newsplugin_submit_message"></p>
+
+<form action="#" method="post">
+<input id="news-search-input" type="text">
+<input id="form-search-button-submit" type="submit">
+</form>
+<p id="newsplugin_search_submit_message"></p>
