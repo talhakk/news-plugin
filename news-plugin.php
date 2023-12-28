@@ -49,13 +49,30 @@ function newsplugin_settings_page() {
         'Google News Api Settings',
         'News Plugin',
         'manage_options',
-        plugin_dir_path(__FILE__) . 'admin-pages.php',
+        plugin_dir_path(__FILE__) . 'settings.php',
         null,
         '',
         20
     );
 }
+/*
+Getting News Api Key and Saving it to options
+*/
+add_action( 'wp_ajax_save_api_key', 'save_api_key' );
 
+function save_api_key() {
+	global $wpdb; // this is how you get access to the database
+
+	$newsapikey =  $_POST['newsapikey'];
+//saving api key and checking if it already exist, in such a case updating it
+    if(!get_option('newsplugin_save_api_key')){
+        add_option('newsplugin_save_api_key', $newsapikey);
+    }else{
+        update_option('newsplugin_save_api_key', $newsapikey);
+    }
+    echo $newsapikey;
+	wp_die(); // this is required to terminate immediately and return a proper response
+}
 /**
  * Deactivation hook.
  */
