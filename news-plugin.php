@@ -39,6 +39,15 @@ function newsplugin_activate() {
 	flush_rewrite_rules(); 
 }
 register_activation_hook( __FILE__, 'newsplugin_activate' );
+/**
+ * Register Scripts
+ */
+function newsplugin_enqueue_script()
+{   
+    wp_enqueue_script( 'newsplugin_jquery', plugin_dir_url( __FILE__ ) . 'newsplugin.js' );
+    wp_enqueue_script("jquery");
+}
+add_action('admin_enqueue_scripts', 'newsplugin_enqueue_script');
 
 
 /**
@@ -124,15 +133,17 @@ function search_news() {
     $searchRegion =  $_POST['searchregion'];
     //retriving api key
     $apikey = get_option('newsplugin_save_api_key');
-    //adding double quotes to output search terms with spaces
-    $url = "https://gnews.io/api/v4/search?q="."\"$searchTerm\""."&lang=$searchLang&country=$searchRegion&max=$searchMax&apikey=$apikey";
-$ch = curl_init();
+    //adding double quotes to output search terms with questions or special characters ( need to be implemented)
+    //$url = "https://gnews.io/api/v4/search?q="."\"$searchTerm\""."&lang=$searchLang&country=$searchRegion&max=$searchMax&apikey=$apikey";
+    $url = "https://gnews.io/api/v4/search?q=$searchTerm&lang=$searchLang&country=$searchRegion&max=$searchMax&apikey=$apikey";
+    //Handling spaces in search term
+    $url=str_replace(' ','%20',$url);
+    $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $data = json_decode(curl_exec($ch), true);
 curl_close($ch);
 $articles = $data['articles'];
-
 $errors = $data['errors'];
 if(!$errors==null){
     for ($i = 0; $i < count($errors); $i++) {
@@ -153,13 +164,14 @@ if(!$errors==null){
     }
     else
     {
-         // Trouble in Paradise:
+         // error handle:
          echo $create_taxonomy->get_error_message();
     }*/
-    
+    $title=wp_strip_all_tags( $articles[$i]['title'] );
+    if (!get_page_by_title($title, OBJECT, 'news')) :
     $new_post = array(
         'post_type' => 'news',
-        'post_title'    => wp_strip_all_tags( $articles[$i]['title'] ),
+        'post_title'    => $title,
         'post_content'  => $articles[$i]['content'],
         'post_excerpt'  => $articles[$i]['description'],
         'post_status'   => 'publish',
@@ -169,6 +181,7 @@ if(!$errors==null){
         // Insert post into the database
         // Use $wp_error set to true for error handling
     $post_check = wp_insert_post($new_post, true); 
+    
     // add taxonomy data, but it will add country again each time searched 
     
     /* problem here is maybe no taxonomy at this time
@@ -183,8 +196,11 @@ if(!$errors==null){
         echo "Error: " . $post_check->get_error_message();
     } else {
         // The post was successfully inserted, and $post_id contains the post ID
-        echo "Post inserted successfully. New Post ID: " . $post_check;
+        echo nl2br("Post inserted successfully. New Post ID: " . $post_check.". \n");
     }
+else:
+    echo nl2br("Returned News Already exist. \n");
+endif;
     }//for loop
 }//if(!$errors==null){
 
