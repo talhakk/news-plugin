@@ -2,13 +2,14 @@
 //e335cb473ab90265a531a14120ef424c
 $apikey = get_option('newsplugin_save_api_key');
 // adding js in footer for simplicity and to avoid loading it on the whole site
-add_action( 'admin_footer', 'newsplugin_api_javascript' ); 
+//add_action( 'admin_footer', 'newsplugin_api_javascript' ); 
 
 //function newsplugin_api_javascript() { ?>
 	 <?php
 //}//newsplugin_api_javascript
 
 ?> 
+<p>Go to <a href="https://gnews.io/">https://gnews.io/</a> to Sign up and generate API Key</p>
 <form action="#" method="post">
 <input id="apikey" type="text" name="apikey" value="<?php echo $apikey ?>">
 <input id="form-button-submit" type="submit" value="Save API">
@@ -35,3 +36,4 @@ add_action( 'admin_footer', 'newsplugin_api_javascript' );
 <input id="form-search-button-submit" type="submit" value="Generate News">
 </form>
 <p id="newsplugin_search_submit_message"></p>
+<p>Use do_shortcode('[generatenews]') to include search form</p>

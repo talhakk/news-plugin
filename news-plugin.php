@@ -44,11 +44,45 @@ register_activation_hook( __FILE__, 'newsplugin_activate' );
  */
 function newsplugin_enqueue_script()
 {   
-    wp_enqueue_script( 'newsplugin_jquery', plugin_dir_url( __FILE__ ) . 'newsplugin.js' );
-    wp_enqueue_script("jquery");
+    //wp_enqueue_script("jquery");
+    wp_enqueue_script( 'newsplugin_jquery', plugin_dir_url( __FILE__ ) . 'newsplugin.js', array('jquery'), '1.1',true );
+    
 }
 add_action('admin_enqueue_scripts', 'newsplugin_enqueue_script');
 
+
+
+/**
+ * Add Shortcode
+ */
+add_shortcode('generatenews', 'newsplugin_shortcode');
+function newsplugin_shortcode( ) {
+    // do something to $content
+    // always return
+   echo'<form action="#" method="post">'; 
+   echo'<input id="shortcode-news-search-input" type="text">';
+   /*
+   echo'<input id="news-max-input" type="number" value="10">';
+   echo'<label for="language">Select a language:</label>';
+   echo'<select name="language" id="news-language-input">';
+   echo'<option value="ar">Arabic</option>';
+   echo'<option value="zh">Chinese</option>';
+   echo'<option value="en" selected>English</option>';
+   echo'<option value="hi">Hindi</option>';
+   echo'</select>';
+   echo'<label for="countries">Select a Country:</label>';
+   echo'<select name="countries" id="news-countries-input">';
+   echo'<option value="cn">China</option>';
+   echo'<option value="pk">Pakistan</option>';
+   echo'<option value="us" selected>United States</option>';
+   echo'<option value="in">India</option>';
+   echo'</select>';
+   */
+   echo'<input id="shortcode-form-search-button-submit" type="submit" value="Generate News">';
+   echo'</form>';
+   echo'<p id="shortcode-newsplugin_search_submit_message"></p>';
+    return ;
+}
 
 /**
  * Register Taxonomy
@@ -128,14 +162,14 @@ add_action( 'wp_ajax_search_news', 'search_news' );
 
 function search_news() {
 	$searchTerm =  $_POST['searchterm'];
-    $searchMax =  $_POST['maxnews'];
     $searchLang =  $_POST['searchlang'];
-    $searchRegion =  $_POST['searchregion'];
+    $searchCountry =  $_POST['searchregion'];
+    $searchCount =  $_POST['maxnews'];
     //retriving api key
     $apikey = get_option('newsplugin_save_api_key');
     //adding double quotes to output search terms with questions or special characters ( need to be implemented)
     //$url = "https://gnews.io/api/v4/search?q="."\"$searchTerm\""."&lang=$searchLang&country=$searchRegion&max=$searchMax&apikey=$apikey";
-    $url = "https://gnews.io/api/v4/search?q=$searchTerm&lang=$searchLang&country=$searchRegion&max=$searchMax&apikey=$apikey";
+    $url = "https://gnews.io/api/v4/search?q=$searchTerm&lang=$searchLang&country=$searchCountry&max=$searchCount&apikey=$apikey";
     //Handling spaces in search term
     $url=str_replace(' ','%20',$url);
     $ch = curl_init();
@@ -153,20 +187,7 @@ if(!$errors==null){
     }
 }else{
     for ($i = 0; $i < count($articles); $i++) {
-        // Create post object
-       // $create_taxonomy=wp_insert_term($searchRegion, 'country');
-    /*
-    if ( ! is_wp_error( $create_taxonomy ) )
-    {
-        // Get term_id, set default as 0 if not set
-        $cat_id = isset( $create_taxonomy['term_id'] ) ? $create_taxonomy['term_id'] : 0;
-        // ... etc ...
-    }
-    else
-    {
-         // error handle:
-         echo $create_taxonomy->get_error_message();
-    }*/
+
     $title=wp_strip_all_tags( $articles[$i]['title'] );
     if (!get_page_by_title($title, OBJECT, 'news')) :
     $new_post = array(
@@ -184,11 +205,75 @@ if(!$errors==null){
     
     // add taxonomy data, but it will add country again each time searched 
     
-    /* problem here is maybe no taxonomy at this time
-    $taxonomy = 'country';
-    $termObj  = get_term_by( 'id', 7, $taxonomy);
-    wp_set_object_terms($post_check, $termObj, $taxonomy);
-    */
+    
+    // Check if there was an error during post insertion
+    if (is_wp_error($post_check)) {
+        // Error occurred while inserting the post
+        echo "Error: " . $post_check->get_error_message();
+    } else {
+        // The post was successfully inserted, and $post_id contains the post ID
+        echo nl2br("Post inserted successfully. New Post ID: " . $post_check.". \n");
+    }
+else:
+    echo nl2br("Returned News Already exist. \n");
+endif;
+    }//for loop
+}//if(!$errors==null){
+
+
+    //returing the response
+	wp_die(); // this is required to terminate immediately and return a proper response
+}
+
+/*
+* Getting shortcode Form Data 
+* and 
+* Generating the Custom News Posts
+*/
+add_action( 'wp_ajax_shortcode_news', 'shortcode_news' );
+
+function shortcode_news() {
+	$shortcodesearchTerm =  $_POST['shortcodesearchterm'];
+    //retriving api key
+    $apikey = get_option('newsplugin_save_api_key');
+    //adding double quotes to output search terms with questions or special characters ( need to be implemented)
+    //$url = "https://gnews.io/api/v4/search?q="."\"$searchTerm\""."&lang=$searchLang&country=$searchRegion&max=$searchMax&apikey=$apikey";
+    $url = "https://gnews.io/api/v4/search?q=$shortcodesearchTerm&lang=en&country=us&max=10&apikey=$apikey";
+    //Handling spaces in search term
+    $url=str_replace(' ','%20',$url);
+    $ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$data = json_decode(curl_exec($ch), true);
+curl_close($ch);
+$articles = $data['articles'];
+$errors = $data['errors'];
+if(!$errors==null){
+    for ($i = 0; $i < count($errors); $i++) {
+        //echo "Error: " . $errors[$i][0] . "\n";
+       echo $errors[$i];
+     
+    }
+}else{
+    for ($i = 0; $i < count($articles); $i++) {
+
+    $title=wp_strip_all_tags( $articles[$i]['title'] );
+    if (!get_page_by_title($title, OBJECT, 'news')) :
+    $new_post = array(
+        'post_type' => 'news',
+        'post_title'    => $title,
+        'post_content'  => $articles[$i]['content'],
+        'post_excerpt'  => $articles[$i]['description'],
+        'post_status'   => 'publish',
+        'post_author'   => 1
+        );
+        
+        // Insert post into the database
+        // Use $wp_error set to true for error handling
+    $post_check = wp_insert_post($new_post, true); 
+    
+    // add taxonomy data, but it will add country again each time searched 
+    
     
     // Check if there was an error during post insertion
     if (is_wp_error($post_check)) {

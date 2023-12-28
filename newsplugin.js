@@ -40,4 +40,22 @@
 		});
        
     });//preventdefault
+	 /*
+	Submitting Search Form Data
+	*/
+	$('#shortcode-form-search-button-submit').on('click', function(e){
+		e.preventDefault();
+		var shortcodesearchinput =$("#shortcode-news-search-input").val();
+	  
+		 var data = {
+			 'action': 'shortcode_news',
+			 'shortcodesearchterm': shortcodesearchinput	 
+		 };
+	 
+		 // since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
+		 jQuery.post(ajaxurl, data, function(response) {
+			 document.getElementById('shortcode-newsplugin_search_submit_message').innerHTML=response;
+		 });
+		
+	 });//preventdefault
 	});
