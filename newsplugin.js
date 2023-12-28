@@ -20,6 +20,7 @@
 	*/
 	$('#form-search-button-submit').on('click', function(e){
        e.preventDefault();
+	   $(".loader").addClass("loading");
        var searchinput =$("#news-search-input").val();
        var searchmax=$("#news-max-input").val();
 	   var searchlang=$("#news-language-input").val();
@@ -37,6 +38,7 @@
 		// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
 		jQuery.post(ajaxurl, data, function(response) {
 			document.getElementById('newsplugin_search_submit_message').innerHTML=response;
+			$(".loader").removeClass("loading");
 		});
        
     });//preventdefault
